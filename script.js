@@ -1,57 +1,42 @@
 import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs';
-import {PDFDocument} from 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm';
+import { PDFDocument } from 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
 
 const dropArea = document.getElementById('drop-area');
 const fileInput = document.getElementById('file-input');
-const pdfGrid = document.getElementById('pdf-grid');
-const downloadButton = document.getElementById('download-button');
+const pdfContainer = document.getElementById('pdf-container');
+const downloadAllBtn = document.getElementById('download-all-button');
+downloadAllBtn.addEventListener('click', downloadAllPDFs);
 
-const CROPPED_LEFT = 0.125;
+
+const CROPPED_LEFT = 0.126;
 const CROPPED_TOP = 0.125;
-const CROPPED_BOTTOM = 0.1;
+const CROPPED_BOTTOM = 0.07;
 
-let modifiedPages = [];
-let originalPDFData = null;
-let originalFileName = null;
+let pdfData = [];
 
-// Prevent default behavior for drag/drop events
+// Prevent default drag/drop behavior
 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
     dropArea.addEventListener(event, e => e.preventDefault());
     dropArea.addEventListener(event, e => e.stopPropagation());
 });
 
-// Highlight drop area on drag
-['dragenter', 'dragover'].forEach(event => {
-    dropArea.addEventListener(event, () => dropArea.classList.add('highlight'));
-});
-['dragleave', 'drop'].forEach(event => {
-    dropArea.addEventListener(event, () => dropArea.classList.remove('highlight'));
-});
-
 // Handle file drop
-dropArea.addEventListener('drop', e => {
-    const files = e.dataTransfer.files;
-    handleFiles(files);
-});
+dropArea.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
 
 // Handle file browse
 dropArea.addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', e => {
-    const files = e.target.files;
-    handleFiles(files);
-});
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
 
-// Handle files
+// Handle multiple files
 function handleFiles(files) {
     Array.from(files).forEach(file => {
         if (file.type === 'application/pdf') {
             const reader = new FileReader();
-            originalFileName = file.name.replace('.pdf', '');
             reader.onload = () => {
-                originalPDFData = reader.result;
-                displayPDF(reader.result);
+                const fileName = file.name.replace('.pdf', '');
+                displayPDF(fileName, reader.result);
             };
             reader.readAsDataURL(file);
         } else {
@@ -60,19 +45,57 @@ function handleFiles(files) {
     });
 }
 
-// Display PDFs in grid
-async function displayPDF(dataURL) {
+// Display a single PDF
+async function displayPDF(fileName, dataURL) {
     const pdf = await pdfjsLib.getDocument(dataURL).promise;
+    const pdfId = `pdf-${Date.now()}`; // Unique ID for this PDF
+    const pages = [];
+
+    // Store PDF data URL for later use
+    pdfData.push({ id: pdfId, fileName, pages, dataURL });
+
+    // Create a wrapper for the PDF
+    const wrapper = document.createElement('div');
+    wrapper.className = 'pdf-wrapper';
+    wrapper.id = pdfId;
+
+    // Create a header for the download and remove buttons
+    const header = document.createElement('div');
+    header.className = 'pdf-header';
+
+    const downloadBtn = document.createElement('button');
+    downloadBtn.className = 'download-btn';
+    downloadBtn.textContent = `Download ${fileName}`;
+    downloadBtn.addEventListener('click', () => downloadPDF(fileName, dataURL, pages));
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-btn';
+    removeBtn.textContent = 'Remove PDF';
+    removeBtn.addEventListener('click', () => {
+        wrapper.remove(); // Remove the PDF wrapper
+        const index = pdfData.findIndex(p => p.id === pdfId);
+        if (index !== -1) {
+            pdfData.splice(index, 1); // Remove the PDF from the data array
+        }
+        toggleDownloadAllButton(); // Update visibility of "Download All PDFs" button
+    });
+
+    header.appendChild(downloadBtn);
+    header.appendChild(removeBtn);
+
+    const grid = document.createElement('div');
+    grid.className = 'pdf-grid';
+
     for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
-        const viewport = page.getViewport({scale: 1});
+        const viewport = page.getViewport({ scale: 1 });
 
         const canvas = document.createElement('canvas');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
 
         const context = canvas.getContext('2d');
-        await page.render({canvasContext: context, viewport: viewport}).promise;
+        await page.render({ canvasContext: context, viewport: viewport }).promise;
 
         const pageDiv = document.createElement('div');
         pageDiv.className = 'pdf-item';
@@ -82,93 +105,107 @@ async function displayPDF(dataURL) {
         overlay.className = 'overlay';
         pageDiv.appendChild(overlay);
 
-        let clickCount = 0;
+        let action = 'none'; // Default action
+
+        // Apply pre-defined actions
+        if (i === 1 || i === 4) {
+            action = 'remove';
+        } else if (i === 2 || (i >= 6 && (i - 6) % 3 === 0)) {
+            action = 'trim';
+        }
+
+        applyAction(pageDiv, overlay, action);
+        pages.push({ pageIndex: i, action });
+
         pageDiv.addEventListener('click', () => {
-            clickCount = (clickCount + 1) % 3;
-            updateClasses(pageDiv, clickCount);
-            updatePageState(i, clickCount);
+            const currentAction = pages.find(p => p.pageIndex === i).action;
+            const nextAction = getNextAction(currentAction);
+            applyAction(pageDiv, overlay, nextAction);
+            pages.find(p => p.pageIndex === i).action = nextAction;
         });
 
-        pdfGrid.appendChild(pageDiv);
+        grid.appendChild(pageDiv);
     }
-    downloadButton.classList.remove('hidden');
+
+    wrapper.appendChild(header);
+    wrapper.appendChild(grid);
+
+    // Create a separator inside the wrapper
+    const separator = document.createElement('hr');
+    separator.className = 'pdf-separator';
+
+    wrapper.appendChild(separator);
+
+    // Append the wrapper to the top of the container
+    pdfContainer.insertBefore(wrapper, pdfContainer.firstChild);
+
+    toggleDownloadAllButton();
 }
 
-// Update classes and state
-function updateClasses(pageDiv, clickCount) {
-    const overlay = pageDiv.querySelector('.overlay');
-    overlay.innerHTML = ''; // Clear existing text
 
+// Get the next action in the cycle
+function getNextAction(currentAction) {
+    if (currentAction === 'none') return 'remove';
+    if (currentAction === 'remove') return 'trim';
+    return 'none';
+}
+
+// Apply an action (remove, trim, or reset) to a page
+function applyAction(pageDiv, overlay, action) {
     pageDiv.classList.remove('remove', 'trim');
-    if (clickCount === 1) {
+    overlay.innerHTML = ''; // Clear overlay text
+
+    if (action === 'remove') {
         pageDiv.classList.add('remove');
         overlay.innerHTML = '<span>REMOVE</span>';
-    } else if (clickCount === 2) {
+    } else if (action === 'trim') {
         pageDiv.classList.add('trim');
         overlay.innerHTML = '<span>TRIM</span>';
     }
 }
 
-function updatePageState(pageIndex, clickCount) {
-    const existing = modifiedPages.find(mod => mod.pageIndex === pageIndex);
-    if (existing) {
-        if (clickCount === 0) {
-            modifiedPages = modifiedPages.filter(mod => mod.pageIndex !== pageIndex);
-        } else {
-            existing.action = clickCount === 1 ? 'remove' : 'trim';
-        }
-    } else if (clickCount !== 0) {
-        modifiedPages.push({pageIndex, action: clickCount === 1 ? 'remove' : 'trim'});
-    }
-}
-
 // Download modified PDF
-downloadButton.addEventListener('click', async () => {
-    if (!originalPDFData) return;
-
-    const originalPdfDoc = await PDFDocument.load(originalPDFData);
+async function downloadPDF(fileName, dataURL, pages) {
+    const originalPdfDoc = await PDFDocument.load(dataURL);
     const newPdfDoc = await PDFDocument.create();
 
     const totalPages = originalPdfDoc.getPageCount();
     for (let i = 0; i < totalPages; i++) {
-        const modification = modifiedPages.find(mod => mod.pageIndex === i + 1);
+        const modification = pages.find(mod => mod.pageIndex === i + 1);
 
         if (modification?.action === 'remove') continue;
 
         const [copiedPage] = await newPdfDoc.copyPages(originalPdfDoc, [i]);
-
         const { width, height } = copiedPage.getSize();
 
         if (modification?.action === 'trim') {
-            // First upscales the image to a bigger size (the uncropped area will be equal to the original size),
-            // then crops the image to the desired size
-
             const newWidth = width / (1 - CROPPED_LEFT);
             const newHeight = height / (1 - CROPPED_TOP);
 
             const scaleX = newWidth / width;
             const scaleY = newHeight / height;
 
-            copiedPage.setSize(newWidth, newHeight); // Creates white borders around the page
-            copiedPage.scaleContent(scaleX, scaleY); // Scales the content to fill the page, effectively removing the white borders
+            copiedPage.setSize(newWidth, newHeight);
+            copiedPage.scaleContent(scaleX, scaleY);
 
-            const left_margin = newWidth * CROPPED_LEFT;
-            const top_margin = newHeight * CROPPED_TOP;
-            const bottom_margin = newHeight * CROPPED_BOTTOM;
+            const leftMargin = newWidth * CROPPED_LEFT;
+            const topMargin = newHeight * CROPPED_TOP;
+            const bottomMargin = newHeight * CROPPED_BOTTOM;
 
-            copiedPage.setCropBox( // Crops the left and top margins
-                left_margin,
-                bottom_margin,
-                newWidth - left_margin,
-                newHeight - top_margin - bottom_margin
+            copiedPage.setCropBox(
+                leftMargin,
+                bottomMargin,
+                newWidth - leftMargin,
+                newHeight - topMargin - bottomMargin
             );
         } else {
-            const bottom_margin = height * CROPPED_BOTTOM;
+            const bottomMargin = height * CROPPED_BOTTOM;
+
             copiedPage.setCropBox(
                 0,
-                bottom_margin,
+                bottomMargin,
                 width,
-                height - bottom_margin
+                height - bottomMargin
             );
         }
 
@@ -176,9 +213,35 @@ downloadButton.addEventListener('click', async () => {
     }
 
     const pdfBytes = await newPdfDoc.save();
-    const blob = new Blob([pdfBytes], {type: 'application/pdf'});
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `${originalFileName}_unwuolahfied.pdf`;
+    link.download = `${fileName}_unwuolahfied.pdf`;
     link.click();
-});
+}
+
+function toggleDownloadAllButton() {
+    const downloadAllBtn = document.getElementById('download-all-button');
+    if (pdfData.length > 0) {
+        downloadAllBtn.classList.remove('hidden');
+    } else {
+        downloadAllBtn.classList.add('hidden');
+    }
+}
+
+async function downloadAllPDFs() {
+    for (const pdf of pdfData) {
+        const { fileName, pages } = pdf;
+        const dataURL = await getPDFDataURL(fileName);
+        await downloadPDF(fileName, dataURL, pages);
+    }
+}
+
+async function getPDFDataURL(fileName) {
+    const pdf = pdfData.find(p => p.fileName === fileName);
+    if (pdf && pdf.dataURL) {
+        return pdf.dataURL;
+    }
+    return null;
+}
+

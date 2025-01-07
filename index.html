@@ -12,15 +12,11 @@
 <header>
     <h1>Unwuolahfier</h1>
     <p>
-        <span>
-            Remove unnecessary pages or trim unwanted margins from your Wuolah PDFs!
-        </span>
+        <span>Remove unnecessary pages or trim unwanted margins from your Wuolah PDFs!</span>
         <span style="font-size: 0.75rem; color: #555;">
-            *Click the images to either <strong>remove</strong> the page or <strong>trim</strong> the margins.
+            *If the tool is wrongly detecting the Wuolah ads, simply click the pages to either <strong>remove</strong> the page or <strong>trim</strong> the margins.
         </span>
     </p>
-
-
 </header>
 
 <main>
@@ -29,12 +25,10 @@
         <input type="file" id="file-input" multiple accept="application/pdf">
     </div>
 
-    <div id="pdf-grid"></div>
-</main>
+    <button id="download-all-button" class="download-all-btn hidden">Download All PDFs</button>
 
-<footer>
-    <button id="download-button" class="hidden">Download Modified PDF</button>
-</footer>
+    <div id="pdf-container"></div>
+</main>
 
 <script src="script.js" type="module"></script>
 </body>

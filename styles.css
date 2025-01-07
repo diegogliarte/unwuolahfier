@@ -34,8 +34,26 @@ main {
     width: 100%;
 }
 
-footer {
-    margin: 2rem 0;
+.download-all-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    margin-top: 1rem;
+}
+
+.download-all-btn:hover {
+    background-color: #218838;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.hidden {
+    display: none;
 }
 
 #drop-area {
@@ -58,17 +76,27 @@ footer {
     display: none;
 }
 
-#pdf-grid {
+#pdf-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 1200px;
+    margin: 2rem;
+}
+
+.pdf-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.pdf-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
-    width: 90%;
     justify-content: center;
-    max-width: 1200px;
-}
-
-canvas {
-    width: 250px;
+    width: 100%;
 }
 
 .pdf-item {
@@ -77,6 +105,11 @@ canvas {
     border: 1px solid #ddd;
     overflow: hidden;
     cursor: pointer;
+    transition: box-shadow 0.3s ease;
+}
+
+canvas {
+    width: 250px;
 }
 
 .pdf-item:hover {
@@ -130,7 +163,7 @@ canvas {
 }
 
 /* Download Button */
-#download-button {
+.download-btn {
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
     background-color: #004dea;
@@ -142,11 +175,44 @@ canvas {
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-#download-button:hover {
+.download-btn:hover {
     background-color: #0041c5;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
-.hidden {
+.pdf-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.remove-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    background-color: #d9534f;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.remove-btn:hover {
+    background-color: #c9302c;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.pdf-separator {
+    width: 90%;
+    border: none;
+    border-top: 2px solid #ddd;
+    margin: 2rem;
+}
+
+.pdf-wrapper:last-of-type .pdf-separator {
     display: none;
 }
