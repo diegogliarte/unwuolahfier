@@ -1,5 +1,5 @@
 import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs';
-import { PDFDocument } from 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm';
+import {PDFDocument} from 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
 
@@ -12,7 +12,6 @@ downloadAllBtn.addEventListener('click', downloadAllPDFs);
 
 const CROPPED_LEFT = 0.126;
 const CROPPED_TOP = 0.125;
-const CROPPED_BOTTOM = 0.07;
 
 let pdfData = [];
 
@@ -52,7 +51,7 @@ async function displayPDF(fileName, dataURL) {
     const pages = [];
 
     // Store PDF data URL for later use
-    pdfData.push({ id: pdfId, fileName, pages, dataURL });
+    pdfData.push({id: pdfId, fileName, pages, dataURL});
 
     // Create a wrapper for the PDF
     const wrapper = document.createElement('div');
@@ -88,14 +87,14 @@ async function displayPDF(fileName, dataURL) {
 
     for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 1 });
+        const viewport = page.getViewport({scale: 1});
 
         const canvas = document.createElement('canvas');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
 
         const context = canvas.getContext('2d');
-        await page.render({ canvasContext: context, viewport: viewport }).promise;
+        await page.render({canvasContext: context, viewport: viewport}).promise;
 
         const pageDiv = document.createElement('div');
         pageDiv.className = 'pdf-item';
@@ -115,7 +114,7 @@ async function displayPDF(fileName, dataURL) {
         }
 
         applyAction(pageDiv, overlay, action);
-        pages.push({ pageIndex: i, action });
+        pages.push({pageIndex: i, action});
 
         pageDiv.addEventListener('click', () => {
             const currentAction = pages.find(p => p.pageIndex === i).action;
@@ -176,7 +175,7 @@ async function downloadPDF(fileName, dataURL, pages) {
         if (modification?.action === 'remove') continue;
 
         const [copiedPage] = await newPdfDoc.copyPages(originalPdfDoc, [i]);
-        const { width, height } = copiedPage.getSize();
+        const {width, height} = copiedPage.getSize();
 
         if (modification?.action === 'trim') {
             const newWidth = width / (1 - CROPPED_LEFT);
@@ -190,22 +189,12 @@ async function downloadPDF(fileName, dataURL, pages) {
 
             const leftMargin = newWidth * CROPPED_LEFT;
             const topMargin = newHeight * CROPPED_TOP;
-            const bottomMargin = newHeight * CROPPED_BOTTOM;
 
             copiedPage.setCropBox(
                 leftMargin,
-                bottomMargin,
-                newWidth - leftMargin,
-                newHeight - topMargin - bottomMargin
-            );
-        } else {
-            const bottomMargin = height * CROPPED_BOTTOM;
-
-            copiedPage.setCropBox(
                 0,
-                bottomMargin,
-                width,
-                height - bottomMargin
+                newWidth - leftMargin,
+                newHeight - topMargin
             );
         }
 
@@ -213,7 +202,7 @@ async function downloadPDF(fileName, dataURL, pages) {
     }
 
     const pdfBytes = await newPdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const blob = new Blob([pdfBytes], {type: 'application/pdf'});
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `${fileName}_unwuolahfied.pdf`;
@@ -231,7 +220,7 @@ function toggleDownloadAllButton() {
 
 async function downloadAllPDFs() {
     for (const pdf of pdfData) {
-        const { fileName, pages } = pdf;
+        const {fileName, pages} = pdf;
         const dataURL = await getPDFDataURL(fileName);
         await downloadPDF(fileName, dataURL, pages);
     }
