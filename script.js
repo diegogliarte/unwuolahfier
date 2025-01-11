@@ -12,6 +12,8 @@ downloadAllBtn.addEventListener('click', downloadAllPDFs);
 
 const CROPPED_LEFT = 0.126;
 const CROPPED_TOP = 0.125;
+const CROPPED_RIGHT = 0.03;
+const CROPPED_BOTTOM = 0.04;
 
 let pdfData = [];
 
@@ -179,7 +181,7 @@ async function downloadPDF(fileName, dataURL, pages) {
 
         if (modification?.action === 'trim') {
             const newWidth = width / (1 - CROPPED_LEFT);
-            const newHeight = height / (1 - CROPPED_TOP);
+            const newHeight = height / (1 - CROPPED_TOP - CROPPED_BOTTOM);
 
             const scaleX = newWidth / width;
             const scaleY = newHeight / height;
@@ -189,12 +191,37 @@ async function downloadPDF(fileName, dataURL, pages) {
 
             const leftMargin = newWidth * CROPPED_LEFT;
             const topMargin = newHeight * CROPPED_TOP;
+            const bottomMargin = newHeight * CROPPED_BOTTOM;
 
             copiedPage.setCropBox(
                 leftMargin,
-                0,
+                bottomMargin,
                 newWidth - leftMargin,
-                newHeight - topMargin
+                newHeight - topMargin - bottomMargin
+            );
+        } else {
+            let NEW_CROPPED_BOTTOM = CROPPED_BOTTOM;
+            if (width > height) {
+                NEW_CROPPED_BOTTOM = CROPPED_BOTTOM / 2;
+            }
+
+            const newWidth = width * (1 + CROPPED_RIGHT);
+            const newHeight = height * (1 - NEW_CROPPED_BOTTOM);
+
+            const scaleX = newWidth / width;
+            const scaleY = newHeight / height;
+
+            copiedPage.setSize(newWidth, newHeight);
+            copiedPage.scaleContent(scaleX, scaleY);
+
+            const rightMargin = width * CROPPED_RIGHT;
+            const bottomMargin = height * NEW_CROPPED_BOTTOM;
+
+            copiedPage.setCropBox(
+                0,
+                bottomMargin,
+                newWidth - rightMargin,
+                newHeight - bottomMargin
             );
         }
 
