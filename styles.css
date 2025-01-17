@@ -215,3 +215,17 @@ canvas {
 .pdf-wrapper:last-of-type .pdf-separator {
     display: none;
 }
+
+#loading-spinner {
+    visibility: hidden;
+    transform: scale(0);
+    margin: 0;
+    max-height: 0;
+}
+
+#loading-spinner.visible {
+    margin: 2rem;
+    max-height: 5rem;
+    visibility: visible;
+    transform: scale(1);
+}

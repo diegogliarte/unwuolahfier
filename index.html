@@ -7,10 +7,12 @@
     <title>Unwuolahfier</title>
 
     <!-- Metadata -->
-    <meta name="description" content="Easily remove or trim unwanted pages and margins from your Wuolah PDFs with Unwuolahfier.">
+    <meta name="description"
+          content="Easily remove or trim unwanted pages and margins from your Wuolah PDFs with Unwuolahfier.">
     <meta name="keywords" content="Wuolah, PDF, trim, remove pages, PDF editor, Unwuolahfier">
     <meta property="og:title" content="Unwuolahfier - Trim and Remove Wuolah PDF Pages">
-    <meta property="og:description" content="Remove unnecessary pages or trim unwanted margins from Wuolah PDFs with just a few clicks.">
+    <meta property="og:description"
+          content="Remove unnecessary pages or trim unwanted margins from Wuolah PDFs with just a few clicks.">
     <meta property="og:url" content="https://unwuolahfier.netlify.app">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://unwuolahfier.netlify.app/favicon.png">
@@ -38,6 +40,21 @@
         <p>Drag and drop PDF files here or click to browse</p>
         <input type="file" id="file-input" multiple accept="application/pdf">
     </div>
+
+    <svg id="loading-spinner" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+        <circle fill="#004DEA" stroke="#004DEA" stroke-width="15" r="15" cx="40" cy="100">
+            <animate attributeName="opacity" calcMode="spline" dur="2" values="1;0;1;" keySplines=".5 0 .5 1;.5 0 .5 1"
+                     repeatCount="indefinite" begin="-.4"></animate>
+        </circle>
+        <circle fill="#004DEA" stroke="#004DEA" stroke-width="15" r="15" cx="100" cy="100">
+            <animate attributeName="opacity" calcMode="spline" dur="2" values="1;0;1;" keySplines=".5 0 .5 1;.5 0 .5 1"
+                     repeatCount="indefinite" begin="-.2"></animate>
+        </circle>
+        <circle fill="#004DEA" stroke="#004DEA" stroke-width="15" r="15" cx="160" cy="100">
+            <animate attributeName="opacity" calcMode="spline" dur="2" values="1;0;1;" keySplines=".5 0 .5 1;.5 0 .5 1"
+                     repeatCount="indefinite" begin="0"></animate>
+        </circle>
+    </svg>
 
     <button id="download-all-button" class="download-all-btn hidden">Download All PDFs</button>
 

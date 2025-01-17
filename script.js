@@ -7,6 +7,7 @@ const dropArea = document.getElementById('drop-area');
 const fileInput = document.getElementById('file-input');
 const pdfContainer = document.getElementById('pdf-container');
 const downloadAllBtn = document.getElementById('download-all-button');
+const loadingSpinner = document.getElementById('loading-spinner');
 downloadAllBtn.addEventListener('click', downloadAllPDFs);
 
 
@@ -32,12 +33,19 @@ fileInput.addEventListener('change', e => handleFiles(e.target.files));
 
 // Handle multiple files
 function handleFiles(files) {
+    let filesLoading = 0;
     Array.from(files).forEach(file => {
         if (file.type === 'application/pdf') {
             const reader = new FileReader();
             reader.onload = () => {
+                filesLoading++;
                 const fileName = file.name.replace('.pdf', '');
-                displayPDF(fileName, reader.result);
+                loadingSpinner.classList.add('visible')
+                displayPDF(fileName, reader.result).then(() => {
+                    filesLoading--;
+                    if (filesLoading === 0)
+                        loadingSpinner.classList.remove('visible')
+                });
             };
             reader.readAsDataURL(file);
         } else {
